@@ -9,6 +9,7 @@ from musket_server import projects
 
 TASK_STATUS_INPROGRESS = "inprogress"
 TASK_STATUS_COMPLETE = "complete"
+TASK_STATUS_UNKNOWN = "unknown_task"
 
 class Task:
     def __init__(self):
@@ -21,9 +22,10 @@ class Task:
         self.manager = manager
 
     def complete(self):
-        self.on_complete()
+        with self.manager.lock:
+            self.on_complete()
 
-        self.manager.complete_task(self)
+            self.manager.complete_task(self)
 
     def run(self):
         print("running")
@@ -58,6 +60,14 @@ class TaskManager:
 
     def complete_task(self, task):
         task.status = TASK_STATUS_COMPLETE
+
+    def task_status(self, task_id):
+        with self.lock:
+            for item in self.tasks:
+                if item.id == task_id:
+                    return item.status
+
+        return TASK_STATUS_UNKNOWN
 
     def update_tasks(self):
         with self.lock:

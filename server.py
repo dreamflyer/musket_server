@@ -17,12 +17,12 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
-        if "gitclone" in self.path:
-            destination = os.path.expanduser("~/.musket_core/temp")
+        print(self.path)
 
+        if "/gitclone" in self.path:
             git_url = utils.git_url(self.path)
 
-            destination = os.path.expanduser("~/.musket_core/temp")
+            destination = utils.temp_folder()
 
             if os.path.exists(destination):
                 shutil.rmtree(destination)
@@ -31,7 +31,9 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
             subprocess.Popen(['git', 'clone', git_url, destination])
 
-        if "project_fit" in self.path:
+            self.pickup_project()
+
+        if "/project_fit" in self.path:
             params = utils.params(self.path)
 
             print(params)
@@ -40,7 +42,7 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
             self.wfile.write(id.encode())
 
-        if "report" in self.path:
+        if "/report" in self.path:
             params = utils.params(self.path)
 
             print(params)
@@ -48,7 +50,34 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             task_id = params["task_id"]
             from_line = params["from_line"]
 
-            self.wfile.write(utils.read_report(task_id, from_line).encode())
+            self.server.task_manager.update_tasks()
+
+            report = utils.read_report(task_id, from_line, self.server.task_manager.task_status(task_id)).encode()
+
+            if report == "report_not_awailable_yet":
+                return report_not_awailable_yet
+
+            print(report)
+
+            self.wfile.write(report)
+
+        if "/last_report" in self.path:
+            params = utils.params(self.path)
+
+            print(params)
+
+            task_id = params["task_id"]
+
+            self.server.task_manager.update_tasks()
+
+            report = utils.read_report(task_id, -1000, self.server.task_manager.task_status(task_id)).encode()
+
+            if report == "report_not_awailable_yet":
+                return report_not_awailable_yet
+
+            print(report)
+
+            self.wfile.write(report)
 
     def do_POST(self):
         self.send_response(200)
@@ -80,7 +109,7 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 def run_server(port, task_manager: tasks.TaskManager):
     with socketserver.TCPServer(("", port), CustomHandler) as httpd:
         httpd.task_manager = task_manager
-        task_manager.server = http
+        task_manager.server = httpd
 
         httpd.serve_forever()
 

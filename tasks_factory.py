@@ -33,9 +33,11 @@ class ProjectFitTask(tasks.Task):
         process_streamer.execute_command("musket fit", self.cwd(), data_handler)
 
     def on_data(self, data):
-        with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
-            f.write(data)
+        with self.manager.lock:
+            with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
+                f.write(data)
 
     def on_complete(self):
-        with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
-            f.write("\nreport_end")
+        with self.manager.lock:
+            with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
+                f.write("\nreport_end")

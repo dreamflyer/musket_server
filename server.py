@@ -17,26 +17,23 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
-        print(self.path)
-
         if "/gitclone" in self.path:
-            git_url = utils.git_url(self.path)
+            with self.server.task_manager.lock:
+                git_url = utils.git_url(self.path)
 
-            destination = utils.temp_folder()
+                destination = utils.temp_folder()
 
-            if os.path.exists(destination):
-                shutil.rmtree(destination)
+                if os.path.exists(destination):
+                    shutil.rmtree(destination)
 
-            os.mkdir(destination)
+                os.mkdir(destination)
 
-            subprocess.Popen(['git', 'clone', git_url, destination])
+                subprocess.Popen(['git', 'clone', git_url, destination])
 
-            self.pickup_project()
+                self.pickup_project()
 
         if "/project_fit" in self.path:
             params = utils.params(self.path)
-
-            print(params)
 
             id = tasks_factory.schedule_command_task(params["project"], self.server.task_manager)
 
@@ -45,8 +42,6 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
         if "/report" in self.path:
             params = utils.params(self.path)
 
-            print(params)
-
             task_id = params["task_id"]
             from_line = params["from_line"]
 
@@ -54,17 +49,10 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
             report = utils.read_report(task_id, from_line, self.server.task_manager.task_status(task_id)).encode()
 
-            if report == "report_not_awailable_yet":
-                return report_not_awailable_yet
-
-            print(report)
-
             self.wfile.write(report)
 
         if "/last_report" in self.path:
             params = utils.params(self.path)
-
-            print(params)
 
             task_id = params["task_id"]
 
@@ -72,12 +60,24 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
             report = utils.read_report(task_id, -1000, self.server.task_manager.task_status(task_id)).encode()
 
-            if report == "report_not_awailable_yet":
-                return report_not_awailable_yet
-
-            print(report)
-
             self.wfile.write(report)
+
+        if "/terminate" in self.path:
+            params = utils.params(self.path)
+
+            task_id = params["task_id"]
+
+            self.server.task_manager.terminate_task(task_id)
+
+        if "/list" in self.path:
+            self.server.task_manager.update_tasks()
+
+            result = ""
+
+            for item in self.server.task_manager.tasks:
+                result += item.info() + "\n"
+
+            self.wfile.write(result.encode("utf-8"))
 
     def do_POST(self):
         self.send_response(200)

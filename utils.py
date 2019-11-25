@@ -9,7 +9,7 @@ from musket_core import utils
 
 import shutil
 
-REPORT_STATUS_NOT_AWAILABLE_YET = "report_not_awailable_yet"
+REPORT_STATUS_NOT_AVAILABLE_YET = "report_not_available_yet"
 REPORT_STATUS_NO_UPDATES = "report_no_updates"
 REPORT_STATUS_TASK_COMPLETE = "report_task_complete"
 REPORT_STATUS_TASK_UNKNOWN = "report_task_unknown"
@@ -64,22 +64,18 @@ def read_report(task_id, from_line, task_status):
         return REPORT_STATUS_TASK_SCHEDULED
 
     if not os.path.exists(path) and task_status == "inprogress":
-        return REPORT_STATUS_NOT_AWAILABLE_YET
+        return REPORT_STATUS_NOT_AVAILABLE_YET
 
     if task_status == "unknown_task":
         return REPORT_STATUS_TASK_UNKNOWN
 
     count = 0
 
-    print("TASK STATUS: " + str(task_status))
-
     lines = []
 
     with open(path, "rb") as f:
         for line in io.TextIOWrapper(f):
             lines.append(line)
-
-    print("from_line: " + str(from_line))
 
     lines = lines[int(from_line):]
 

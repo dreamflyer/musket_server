@@ -20,6 +20,7 @@ class ProjectFitTask(tasks.Task):
         tasks.Task.__init__(self)
 
         self.project = project
+        self.process = None
 
         musket_utils.ensure(self.report_dir())
 
@@ -30,14 +31,27 @@ class ProjectFitTask(tasks.Task):
         return os.path.join(utils.reports_folder(), self.id)
 
     def do_task(self, data_handler):
-        process_streamer.execute_command("musket fit", self.cwd(), data_handler)
+        process_streamer.execute_command("musket fit", self.cwd(), data_handler, self.set_process)
 
     def on_data(self, data):
-        with self.manager.lock:
-            with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
-                f.write(data)
+        with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
+            f.write(data)
 
     def on_complete(self):
-        with self.manager.lock:
-            with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
-                f.write("\nreport_end")
+        print("TASK STOP")
+
+        with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
+            f.write("\nreport_end")
+
+    def set_process(self, process):
+        self.process = process
+
+    def terminate(self):
+        if self.process:
+            process.terminate()
+
+    def info(self):
+        return "project_id: " + os.path.basename(self.project.path) + ", status: " + str(self.status) + ", task_id: " + self.id
+
+
+

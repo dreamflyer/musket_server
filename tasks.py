@@ -21,11 +21,15 @@ class Task:
     def register(self, manager):
         self.manager = manager
 
-    def complete(self):
+    def call_on_complete(self):
         with self.manager.lock:
             self.on_complete()
 
             self.manager.complete_task(self)
+
+    def call_on_data(self, data):
+        with self.manager.lock:
+            self.on_data(data)
 
     def run(self):
         print("running")
@@ -33,7 +37,7 @@ class Task:
         def rejection(cause):
             print(cause)
 
-        Promise(lambda resolve, reject: resolve(self.do_task(self.on_data) or True)).then(lambda success: (self.complete() or True), rejection)
+        Promise(lambda resolve, reject: resolve(self.do_task(self.call_on_data) or True)).then(lambda success: (self.call_on_complete() or True), rejection)
 
     def on_data(self, data):
         pass
@@ -42,6 +46,12 @@ class Task:
         pass
 
     def do_task(self, data_handler):
+        pass
+
+    def terminate(self):
+        pass
+
+    def info(self):
         pass
 
 class TaskManager:
@@ -87,6 +97,11 @@ class TaskManager:
     def shutdown(self):
         self.server.shutdown()
         self.server.server_close()
+
+    def terminate_task(self, task_id):
+        for item in self.tasks:
+            if item.id == task_id:
+                item.terminate()
 
     def loop(self):
         try:

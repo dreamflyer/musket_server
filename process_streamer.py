@@ -57,20 +57,31 @@ class Streamer:
 
         self.send()
 
-def stream_subprocess(cmd, streamer, cwd=None):
+def stream_subprocess(cmd, streamer, cwd, process_setter):
     os.environ["PATH"]=os.environ["PATH"] + ":/Users/dreamflyer/.conda/envs/surf360cam/bin"
 
+    print("TASK START")
+
+    process = subprocess.Popen(["musket", "deps_download"], stdout=subprocess.PIPE, cwd=cwd)
+
+    process_setter(process)
+
+    for line in io.TextIOWrapper(process.stdout, encoding="utf-8"):
+        streamer.write_line(line)
+
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=cwd)
+
+    process_setter(process)
 
     for line in io.TextIOWrapper(process.stdout, encoding="utf-8"):
         streamer.write_line(line)
 
     streamer.stop()
 
-def execute(command_line, streamer, cwd=None):
-    stream_subprocess(shlex.split(command_line), streamer, cwd)
+def execute(command_line, streamer, cwd, process_setter):
+    stream_subprocess(shlex.split(command_line), streamer, cwd, process_setter)
 
-def execute_command(command_line, cwd, logger):
-    execute(command_line, Streamer(10, logger), cwd = cwd)
+def execute_command(command_line, cwd, logger, process_setter):
+    execute(command_line, Streamer(10, logger), cwd, process_setter)
 
 

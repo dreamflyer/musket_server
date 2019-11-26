@@ -14,6 +14,6 @@ setup(name='musket_server',
       zip_safe=False,
       entry_points={
             'console_scripts': [
-                  'musket = musket_server.main:main'
+                  'musket_server = musket_server.main:main'
             ]
       })

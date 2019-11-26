@@ -32,6 +32,9 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
                 self.pickup_project()
 
+        if "/status" in self.path:
+            self.wfile.write("online".encode())
+        
         if "/project_fit" in self.path:
             params = utils.params(self.path)
 

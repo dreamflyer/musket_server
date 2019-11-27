@@ -22,10 +22,15 @@ class Task:
         self.manager = manager
 
     def call_on_complete(self):
+        print("call_on_complete: lock")
+
         with self.manager.lock:
+            print("call_on_complete: in_lock")
             self.on_complete()
 
             self.manager.complete_task(self)
+
+            print("call_on_complete: unlock")
 
     def call_on_data(self, data):
         with self.manager.lock:
@@ -37,7 +42,7 @@ class Task:
         def rejection(cause):
             print(cause)
 
-        Promise(lambda resolve, reject: resolve(self.do_task(self.call_on_data) or True)).then(lambda success: (self.call_on_complete() or True), rejection)
+        Promise(lambda resolve, reject: resolve(self.do_task(self.call_on_data) or True)).then(lambda success: (Thread(target=self.call_on_complete).start() or True), rejection)
 
     def on_data(self, data):
         pass
@@ -80,7 +85,10 @@ class TaskManager:
         return TASK_STATUS_UNKNOWN
 
     def update_tasks(self):
+        print("update_tasks: lock")
+
         with self.lock:
+            print("update_tasks: in_lock")
             for item in self.tasks:
                 active_tasks = self.active_tasks_num()
 
@@ -90,6 +98,8 @@ class TaskManager:
                 if not item.status:
                     item.status = TASK_STATUS_INPROGRESS
                     item.run()
+
+        print("update_tasks: unlock")
 
     def active_tasks_num(self):
         return len([item for item in self.tasks if item.status == TASK_STATUS_INPROGRESS])

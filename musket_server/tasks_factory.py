@@ -6,6 +6,10 @@ from musket_core import projects as musket_projects, utils as musket_utils
 
 import asyncio
 
+import time
+
+import tqdm
+
 def schedule_command_task(project_id, task_manager: tasks.TaskManager):
     project = task_manager.workspace.project(project_id)
 
@@ -14,6 +18,49 @@ def schedule_command_task(project_id, task_manager: tasks.TaskManager):
     task_manager.schedule(task)
 
     return task.id
+
+def schedule_assembly_task(project_id, task_manager: tasks.TaskManager):
+    project = task_manager.workspace.project(project_id)
+
+    task = DeltaAssemblyTask(project)
+
+    task_manager.schedule(task)
+
+    return task.id
+
+class DeltaAssemblyTask(tasks.Task):
+    def __init__(self, project: musket_projects.Project):
+        tasks.Task.__init__(self)
+
+        self.project = project
+
+    def on_complete(self):
+        project_id = os.path.basename(self.project.path)
+
+        print("collecting...")
+
+        busy = utils.collect_results(project_id)
+
+        while busy=="busy":
+            time.sleep(1)
+
+            busy = utils.collect_results()
+
+        print("complete")
+
+    def on_data(self, data):
+        pass
+
+    def do_task(self, data_handler):
+        print("starting...")
+
+        pass
+
+    def terminate(self):
+        pass
+
+    def info(self):
+        return "assembly: " + os.path.basename(self.project.path) + ", status: " + str(self.status) + ", task_id: " + self.id
 
 class ProjectFitTask(tasks.Task):
     def __init__(self, project: musket_projects.Project):

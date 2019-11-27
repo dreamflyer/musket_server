@@ -52,6 +52,12 @@ def params(request_path):
 def temp_folder():
     return os.path.expanduser("~/.musket_core/temp")
 
+def workspace_folder():
+    return os.path.expanduser("~/.musket_core/server_workspace")
+
+def project_path(project_id):
+    return os.path.join(workspace_folder(), project_id)
+
 def reports_folder():
     return os.path.expanduser("~/.musket_core/reports")
 
@@ -90,6 +96,74 @@ def listdir(path):
     items = os.listdir(path)
 
     return [item for item in items if not item.startswith('.')]
+
+def project_results(project_id):
+    experiments_path = os.path.join(project_path(project_id), "experiments")
+
+    experiments = listdir(experiments_path)
+
+    all_items = []
+
+    for item in experiments:
+        experiment_path = os.path.join(experiments_path, item)
+
+        get_experiment_items(experiment_path, all_items)
+
+    return [item.replace(workspace_folder() + "/", "") for item in all_items]
+
+def results_zip():
+    return os.path.join(temp_folder(), "project.zip")
+
+def collect_results(project_id):
+    workspace_dir = workspace_folder()
+    files = project_results(project_id)
+
+    temp = temp_folder()
+
+    temp = os.path.join(temp_folder(), "zip")
+
+    if os.path.exists(temp):
+        return "busy"
+
+    utils.ensure(temp)
+
+    for item in files:
+        src = os.path.join(workspace_dir, item)
+
+        if not os.path.exists(src):
+            continue
+
+        dst = os.path.join(temp, item)
+
+        parent = os.path.dirname(dst)
+
+        if not os.path.exists(parent):
+            utils.ensure(parent)
+
+        shutil.copy(src, dst)
+
+    utils.archive(os.path.join(temp, project_id), os.path.join(temp_folder(), "project"))
+
+def get_experiment_items(src, all_items):
+    all_items.append(os.path.join(src, "summary.yaml"))
+
+    list_all(os.path.join(src, "weights"), all_items)
+    list_all(os.path.join(src, "examples"), all_items)
+    list_all(os.path.join(src, "metrics"), all_items)
+
+def list_all(src, all_items):
+    if not os.path.exists(src):
+        return
+
+    items = [item for item in os.listdir(src) if not item.startswith('.')]
+
+    for item in items:
+        full_path = os.path.join(src, item)
+
+        if os.path.isdir(full_path):
+            list_all(full_path, all_items)
+        else:
+            all_items.append(full_path)
 
 def copytree(src, dst):
     utils.ensure(dst)

@@ -109,7 +109,7 @@ def project_results(project_id):
 
         get_experiment_items(experiment_path, all_items)
 
-    return [item.replace(workspace_folder() + "/", "") for item in all_items]
+        return [os.path.relpath(item, workspace_folder()) for item in all_items]
 
 def results_zip():
     return os.path.join(temp_folder(), "project.zip")

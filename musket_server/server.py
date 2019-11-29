@@ -25,8 +25,11 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
         if "/site" in self.path:
             site.serve_get(self)
 
+            return
+
         if "/gitclone" in self.path:
             self.end_headers()
+
             with self.server.task_manager.lock:
                 git_url = utils.git_url(self.path)
 
@@ -41,9 +44,13 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
                 self.pickup_project()
 
+            return
+
         if "/status" in self.path:
             self.end_headers()
             self.wfile.write("online".encode())
+
+            return
 
         if "/project_fit" in self.path:
             self.end_headers()
@@ -52,6 +59,8 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             id = tasks_factory.schedule_command_task(params["project"], self.server.task_manager)
 
             self.wfile.write(id.encode())
+
+            return
 
         if "/report" in self.path:
             self.end_headers()
@@ -66,6 +75,8 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
             self.wfile.write(report)
 
+            return
+
         if "/last_report" in self.path:
             self.end_headers()
             params = utils.params(self.path)
@@ -77,6 +88,8 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             report = utils.read_report(task_id, -1000, self.server.task_manager.task_status(task_id)).encode()
 
             self.wfile.write(report)
+
+            return
 
         if "/task_status" in self.path:
             self.end_headers()
@@ -92,6 +105,8 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
             self.wfile.write(result)
 
+            return
+
         if "/terminate" in self.path:
             self.end_headers()
             params = utils.params(self.path)
@@ -100,12 +115,16 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
             self.server.task_manager.terminate_task(task_id)
 
+            return
+
         if "/tasks_list" in self.path:
             self.end_headers()
             self.server.task_manager.update_tasks()
 
             with self.server.task_manager.lock:
                 self.wfile.write(utils.tasks_info(self.server.task_manager).encode("utf-8"))
+
+            return
 
         if "/project_list" in self.path:
             self.end_headers()
@@ -114,6 +133,8 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             with self.server.task_manager.lock:
                 self.wfile.write(utils.projects_info(self.server.task_manager).encode("utf-8"))
 
+            return
+
         if "/collect_delta" in self.path:
             self.end_headers()
             params = utils.params(self.path)
@@ -121,6 +142,8 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             id = tasks_factory.schedule_assembly_task(params["project"], self.server.task_manager)
 
             self.wfile.write(id.encode())
+
+            return
 
         if "/download_delta" in self.path:
             zip_path = os.path.join(utils.temp_folder(), "project.zip")
@@ -139,6 +162,17 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
                         chunk = f.read(1024)
 
                 shutil.rmtree(utils.temp_folder())
+
+            return
+
+        if "/remove_temp_folder":
+            self.end_headers()
+
+            with self.server.task_manager.lock:
+                if os.path.exists(utils.temp_folder()):
+                    shutil.rmtree(utils.temp_folder())
+            
+            return
 
     def do_POST(self):
         self.send_response(200)

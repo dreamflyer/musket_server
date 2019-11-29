@@ -130,7 +130,7 @@ def tasks_info(tasks_manager):
     result = []
 
     for item in tasks_manager.tasks:
-        result.append(item)
+        result.append(item.info())
 
     return json.dumps(result)
 

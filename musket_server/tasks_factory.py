@@ -60,7 +60,12 @@ class DeltaAssemblyTask(tasks.Task):
         pass
 
     def info(self):
-        return "assembly: " + os.path.basename(self.project.path) + ", status: " + str(self.status) + ", task_id: " + self.id
+        return {
+            "assembly": os.path.basename(self.project.path),
+            "task_id": self.id,
+            "status": self.status,
+            "type": "project_result_assembly"
+        }
 
 class ProjectFitTask(tasks.Task):
     def __init__(self, project: musket_projects.Project):
@@ -98,7 +103,12 @@ class ProjectFitTask(tasks.Task):
             process.terminate()
 
     def info(self):
-        return "project_id: " + os.path.basename(self.project.path) + ", status: " + str(self.status) + ", task_id: " + self.id
+        return {
+            "project_id": os.path.basename(self.project.path),
+            "task_id": self.id,
+            "status": self.status,
+            "type": "project_fit"
+        }
 
 
 

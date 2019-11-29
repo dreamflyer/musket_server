@@ -9,6 +9,8 @@ from musket_core import utils
 
 import shutil
 
+import json
+
 REPORT_STATUS_NOT_AVAILABLE_YET = "report_not_available_yet"
 REPORT_STATUS_NO_UPDATES = "report_no_updates"
 REPORT_STATUS_TASK_COMPLETE = "report_task_complete"
@@ -96,6 +98,41 @@ def listdir(path):
     items = os.listdir(path)
 
     return [item for item in items if not item.startswith('.')]
+
+def project_ids():
+    return [item for item in os.listdir(workspace_folder()) if not item.startswith(".")]
+
+def associated_task(tasks_manager, project_id):
+    for item in tasks_manager.tasks:
+        info = item.info()
+
+        if "project_id" in info.keys():
+            return info["project_id"]
+
+    return None
+
+def projects_info(tasks_manager):
+    ids = project_ids()
+
+    result = []
+
+    for item in ids:
+        project_info = {
+            "project_id": item,
+            "task": associated_task(tasks_manager, item)
+        }
+
+        result.append(project_info)
+
+    return json.dumps(result)
+
+def tasks_info(tasks_manager):
+    result = []
+
+    for item in tasks_manager.tasks:
+        result.append(item)
+
+    return json.dumps(result)
 
 def project_results(project_id):
     experiments_path = os.path.join(project_path(project_id), "experiments")

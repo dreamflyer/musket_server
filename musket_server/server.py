@@ -10,7 +10,7 @@ from threading import Thread
 
 from cgi import parse_header, parse_multipart, FieldStorage
 
-from musket_server import utils, tasks, tasks_factory
+from musket_server import utils, tasks, tasks_factory, site
 from musket_core import utils as musket_utils
 
 class CustomHandler(http.server.BaseHTTPRequestHandler):
@@ -21,6 +21,9 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             return
+
+        if "/site" in self.path:
+            site.serve_get(self)
 
         if "/gitclone" in self.path:
             self.end_headers()
@@ -97,16 +100,19 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
             self.server.task_manager.terminate_task(task_id)
 
-        if "/list" in self.path:
+        if "/tasks_list" in self.path:
             self.end_headers()
             self.server.task_manager.update_tasks()
 
-            result = ""
+            with self.server.task_manager.lock:
+                self.wfile.write(utils.tasks_info(self.server.task_manager).encode("utf-8"))
 
-            for item in self.server.task_manager.tasks:
-                result += item.info() + "\n"
+        if "/project_list" in self.path:
+            self.end_headers()
+            self.server.task_manager.update_tasks()
 
-            self.wfile.write(result.encode("utf-8"))
+            with self.server.task_manager.lock:
+                self.wfile.write(utils.projects_info(self.server.task_manager).encode("utf-8"))
 
         if "/collect_delta" in self.path:
             self.end_headers()

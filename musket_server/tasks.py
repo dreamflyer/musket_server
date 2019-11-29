@@ -22,23 +22,16 @@ class Task:
         self.manager = manager
 
     def call_on_complete(self):
-        print("call_on_complete: lock")
-
         with self.manager.lock:
-            print("call_on_complete: in_lock")
             self.on_complete()
 
             self.manager.complete_task(self)
-
-            print("call_on_complete: unlock")
 
     def call_on_data(self, data):
         with self.manager.lock:
             self.on_data(data)
 
     def run(self):
-        print("running")
-
         def rejection(cause):
             print(cause)
 
@@ -85,10 +78,7 @@ class TaskManager:
         return TASK_STATUS_UNKNOWN
 
     def update_tasks(self):
-        print("update_tasks: lock")
-
         with self.lock:
-            print("update_tasks: in_lock")
             for item in self.tasks:
                 active_tasks = self.active_tasks_num()
 
@@ -98,8 +88,6 @@ class TaskManager:
                 if not item.status:
                     item.status = TASK_STATUS_INPROGRESS
                     item.run()
-
-        print("update_tasks: unlock")
 
     def active_tasks_num(self):
         return len([item for item in self.tasks if item.status == TASK_STATUS_INPROGRESS])

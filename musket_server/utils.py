@@ -111,7 +111,7 @@ def associated_task(tasks_manager, project_id):
 
     return None
 
-def projects_info(tasks_manager):
+def projects_info(tasks_manager, dump=True):
     ids = project_ids()
 
     result = []
@@ -124,15 +124,23 @@ def projects_info(tasks_manager):
 
         result.append(project_info)
 
-    return json.dumps(result)
+    return json.dumps(result) if dump else result
 
-def tasks_info(tasks_manager):
+def tasks_info(tasks_manager, dump=True):
     result = []
 
     for item in tasks_manager.tasks:
         result.append(item.info())
 
-    return json.dumps(result)
+    return json.dumps(result) if dump else result
+
+def all_info(tasks_manager, dump=True):
+    result = {
+        "tasks": tasks_info(tasks_manager, False),
+        "projects": projects_info(tasks_manager, False)
+    }
+
+    return json.dumps(result) if dump else result
 
 def project_results(project_id):
     experiments_path = os.path.join(project_path(project_id), "experiments")

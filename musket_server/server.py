@@ -135,6 +135,26 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
             return
 
+        if "/all_state" in self.path:
+            self.end_headers()
+            self.server.task_manager.update_tasks()
+
+            with self.server.task_manager.lock:
+                self.wfile.write(utils.all_info(self.server.task_manager).encode("utf-8"))
+
+            return
+
+        if "/remove_project" in self.path:
+            self.end_headers()
+            self.server.task_manager.update_tasks()
+
+            project_id = params["project_id"]
+
+            with self.server.task_manager.lock:
+                shutil.rmtree(utils.project_path(project_id))
+
+            return
+
         if "/collect_delta" in self.path:
             self.end_headers()
             params = utils.params(self.path)
@@ -171,7 +191,7 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             with self.server.task_manager.lock:
                 if os.path.exists(utils.temp_folder()):
                     shutil.rmtree(utils.temp_folder())
-            
+
             return
 
     def do_POST(self):

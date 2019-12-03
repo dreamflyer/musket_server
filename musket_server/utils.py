@@ -106,8 +106,8 @@ def associated_task(tasks_manager, project_id):
     for item in tasks_manager.tasks:
         info = item.info()
 
-        if "project_id" in info.keys():
-            return info["project_id"]
+        if "project_id" in info.keys() and info["project_id"] == project_id:
+            return info
 
     return None
 

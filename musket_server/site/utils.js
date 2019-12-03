@@ -1,7 +1,13 @@
 function renderHTML(htmlString) {
-  let div = document.createElement('div');
+    let div = document.createElement('div');
 
-  div.innerHTML = htmlString.trim();
+    div.innerHTML = htmlString.trim();
 
-  return div.firstChild;
+    return div.firstChild;
+}
+
+function getJSON(url) {
+    return new Promise(resolve => {
+        $.getJSON(url, data => resolve(data));
+    });
 }

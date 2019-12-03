@@ -110,5 +110,47 @@ class ProjectFitTask(tasks.Task):
             "type": "project_fit"
         }
 
+class FakeTask(tasks.Task):
+    def __init__(self, project: musket_projects.Project):
+        tasks.Task.__init__(self)
+
+        self.project = project
+        self.process = None
+
+        musket_utils.ensure(self.report_dir())
+
+    def cwd(self):
+        return self.project.path
+
+    def report_dir(self):
+        return os.path.join(utils.reports_folder(), self.id)
+
+    def do_task(self, data_handler):
+        process_streamer.execute_command("python fake_task.py", self.cwd(), data_handler, self.set_process)
+
+    def on_data(self, data):
+        with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
+            f.write(data)
+
+    def on_complete(self):
+        print("TASK STOP")
+
+        with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
+            f.write("\nreport_end")
+
+    def set_process(self, process):
+        self.process = process
+
+    def terminate(self):
+        if self.process:
+            process.terminate()
+
+    def info(self):
+        return {
+            "project_id": os.path.basename(self.project.path),
+            "task_id": self.id,
+            "status": self.status,
+            "type": "project_fit"
+        }
 
 

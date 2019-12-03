@@ -6,6 +6,9 @@ import io
 import shutil
 import subprocess
 
+import json
+import time
+
 from threading import Thread
 
 from cgi import parse_header, parse_multipart, FieldStorage
@@ -57,6 +60,9 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             params = utils.params(self.path)
 
             id = tasks_factory.schedule_command_task(params["project"], self.server.task_manager)
+
+            if "json" in params.keys():
+                id = json.dumps({"task_id": id})
 
             self.wfile.write(id.encode())
 
@@ -148,10 +154,14 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.server.task_manager.update_tasks()
 
+            params = utils.params(self.path)
+
             project_id = params["project_id"]
 
             with self.server.task_manager.lock:
                 shutil.rmtree(utils.project_path(project_id))
+
+                self.wfile.write(json.dumps({"project_id": project_id}).encode("utf-8"))
 
             return
 

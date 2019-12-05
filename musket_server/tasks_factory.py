@@ -13,7 +13,7 @@ import tqdm
 def schedule_command_task(project_id, task_manager: tasks.TaskManager):
     project = task_manager.workspace.project(project_id)
 
-    task = ProjectFitTask(project)
+    task = FakeTask(project)
 
     task_manager.schedule(task)
 
@@ -92,15 +92,14 @@ class ProjectFitTask(tasks.Task):
     def on_complete(self):
         print("TASK STOP")
 
-        with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
-            f.write("\nreport_end")
-
     def set_process(self, process):
         self.process = process
 
     def terminate(self):
         if self.process:
-            process.terminate()
+            self.process.terminated = True
+
+            self.process.kill()
 
     def info(self):
         return {
@@ -126,7 +125,7 @@ class FakeTask(tasks.Task):
         return os.path.join(utils.reports_folder(), self.id)
 
     def do_task(self, data_handler):
-        process_streamer.execute_command("python fake_task.py", self.cwd(), data_handler, self.set_process)
+        process_streamer.execute_command("python /Users/dreamflyer/Desktop/musket_server/fake_task.py", self.cwd(), data_handler, self.set_process)
 
     def on_data(self, data):
         with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
@@ -135,15 +134,14 @@ class FakeTask(tasks.Task):
     def on_complete(self):
         print("TASK STOP")
 
-        with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
-            f.write("\nreport_end")
-
     def set_process(self, process):
         self.process = process
 
     def terminate(self):
         if self.process:
-            process.terminate()
+            self.process.terminated = True
+
+            self.process.kill()
 
     def info(self):
         return {
@@ -152,5 +150,3 @@ class FakeTask(tasks.Task):
             "status": self.status,
             "type": "project_fit"
         }
-
-

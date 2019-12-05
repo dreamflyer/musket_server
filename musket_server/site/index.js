@@ -47,7 +47,7 @@ class Data {
                 return;
             }
 
-            if(old_item.update === "lock" || this.is_projects_equal(old_item, item)) {
+            if(old_item.update === "lock" || this.isProjectsEqual(old_item, item)) {
                 newProjects.push(old_item);
 
                 return;
@@ -78,19 +78,23 @@ class Data {
         this.projects = newProjects;
     }
 
-    is_projects_equal(project1, project2) {
+    isProjectsEqual(project1, project2) {
         if(project1["project_id"] !== project2["project_id"]) {
             return false;
         }
 
-        if(!this.is_tasks_equal(project1["task"], project2["task"])) {
+        if(!this.isTasksEqual(project1["tasks"], project2["tasks"])) {
             return false;
         }
 
         return true;
     }
 
-    is_tasks_equal(t1, t2) {
+    isTasksEqual(tasks1, tasks2) {
+        return isArraysEqual(tasks1, tasks2, (item1, item2)=> this.isTaskEqual(item1, item2));
+    }
+
+    isTaskEqual(t1, t2) {
         if(!t1 || !t2) {
             return t1 == t2;
         }
@@ -141,7 +145,21 @@ class Data {
         });
     }
 
-    runProject(project_id) {
+    terminateTask(project) {
+        if(!project.activeTask) {
+            return
+        }
+
+        this.lockProject(project.id);
+
+        getJSON('../terminate?task_id=' + project.activeTask).then(data => {
+            this.unlockProject(project.id);
+        });
+    }
+
+    runProject(project) {
+        let project_id = project.id;
+
         this.lockProject(project_id);
 
         getJSON('../project_fit?project=' + project_id + "&json=true").then(data => {
@@ -149,7 +167,7 @@ class Data {
                 canUnlock: (newProjects) => {
                     let project = this.getProject(project_id, newProjects);
 
-                    return (project && project.task && project.task["task_id"] === data["task_id"]) ? true : false;
+                    return (project && project.tasks && project.tasks.find((item) => item["task_id"] == data["task_id"])) ? true : false;
                 },
 
                 unlock: () => this.unlockProject(project_id),
@@ -160,22 +178,65 @@ class Data {
     }
 }
 
+class TerminalView {
+    constructor() {
+        this.terminal = new Terminal();
+
+        this.terminal.convertEol = true;
+
+        this.terminal.open(document.getElementById('terminal'));
+    }
+
+    start(taskId) {
+        this.stop();
+
+        this.handler = {
+            report: (data) => {
+                this.terminal.write(data);
+            },
+
+            stop: false
+        };
+
+        readReport(taskId, -1000, this.handler);
+    }
+
+    stop() {
+        if(this.handler) {
+            this.handler.stop = true;
+
+            this.handler = null;
+        }
+
+        this.terminal.clear();
+    }
+}
+
 class MainView {
     constructor(data) {
         this.data = data;
 
-        this.tasks = new Tasks();
         this.projects = new Projects();
 
-        this.items = [this.tasks, this.projects];
+        this.items = [this.projects];
+
+        this.terminalView = new TerminalView();
 
         this.items.forEach(item => {
-            item.onEvent("Delete", (dataId, eventId) => {
-                data.deleteProject(eventId);
+            item.onEvent("Delete", (dataId, project) => {
+                data.deleteProject(project.id);
             });
 
-            item.onEvent("Run", (dataId, eventId) => {
-                data.runProject(eventId);
+            item.onEvent("Run", (dataId, project) => {
+                data.runProject(project);
+            });
+
+            item.onEvent("Stop", (dataId, project) => {
+                data.terminateTask(project);
+            });
+
+            item.onEvent("Report", (dataId, project) => {
+                this.terminalView.start(project.activeTask);
             });
 
             item.onClick(()=> {
@@ -191,22 +252,13 @@ class MainView {
     applyData(item, data) {
         item.applyData(data);
     }
-
-    hideAllTabs() {
-        this.tasks.hide();
-        this.projects.hide();
-    }
 }
 
 class Projects {
     constructor() {
-        this.tab = document.getElementById("tab-projects");
         this.container = document.getElementById("tab-projects-content");
         this.onClickHandler = null;
         this.data_id = "projects";
-
-        this.tab.wrapper = this;
-
         this.children = []
 
         this.eventHandlers = {}
@@ -218,24 +270,6 @@ class Projects {
 
     cleanup() {
         this.container.innerHTML = "";
-    }
-
-    hide() {
-        this.container.style.display = "none";
-        this.tab.classList.remove("active");
-    }
-
-    show() {
-        this.container.style.display = null;
-        this.tab.classList.add("active");
-    }
-
-    tabClick() {
-        if(!this.onClickHandler){
-            return
-        }
-
-        this.onClickHandler();
     }
 
     onClick(handler) {
@@ -260,7 +294,7 @@ class Projects {
                    let handler = this.eventHandlers[name];
 
                    if(handler) {
-                       handler(this.data_id, projectItem.id);
+                       handler(this.data_id, projectItem);
                    }
                 });
 
@@ -269,55 +303,6 @@ class Projects {
 
             found.applyData(item);
         })
-    }
-}
-
-class Tasks {
-    constructor() {
-        this.tab = document.getElementById("tab-tasks");
-        this.container = document.getElementById("tab-tasks-content");
-        this.onClickHandler = null;
-        this.data_id = "tasks";
-
-        this.tab.wrapper = this;
-    }
-
-    onEvent(name, handler) {
-
-    }
-
-    cleanup() {
-        //this.container.innerHTML = "";
-    }
-
-    hide() {
-        this.container.style.display = "none";
-        this.tab.classList.remove("active");
-    }
-
-    show() {
-        this.container.style.display = null;
-        this.tab.classList.add("active");
-    }
-
-    tabClick() {
-        if(!this.onClickHandler){
-            return
-        }
-
-        this.onClickHandler();
-    }
-
-    applyData(data) {
-
-    }
-
-    onClick(handler) {
-        this.onClickHandler = handler;
-    }
-
-    render(data) {
-
     }
 }
 
@@ -330,6 +315,8 @@ class ProjectItem {
 
         this.onDestroyHandlers = [];
         this.onClickHandlers = [];
+
+        this.activeTask = null;
     }
 
     get id() {
@@ -347,6 +334,8 @@ class ProjectItem {
             this.getButton("Run").wrapper = this;
             this.getButton("Stop").wrapper = this;
             this.getButton("Delete").wrapper = this;
+
+            this.getItem("a", "Report").wrapper = this;
         }
 
         return this.element;
@@ -363,10 +352,10 @@ class ProjectItem {
             return
         }
 
-        if(this.data.update === "create" || this.data.update === "update") {
-            let status = this.data.task && this.data.task.status;
+        this.activeTask = this.getActiveTask(data) && this.getActiveTask(data)["task_id"];
 
-            if(status === "inprogress") {
+        if(this.data.update === "create" || this.data.update === "update") {
+            if(this.isInProgress(data) || this.isSheduled(data)) {
                 this.setButtonState("Run", "btn-success", false);
                 this.setButtonState("Stop", "btn-danger", true);
                 this.setButtonState("Delete", "btn-secondary", true);
@@ -386,6 +375,30 @@ class ProjectItem {
         }
     }
 
+    getActiveTask(project) {
+        if(!project.tasks) {
+            return null;
+        }
+
+        return project.tasks.find((item) => item.status === "inprogress")
+    }
+
+    isInProgress(project) {
+        return this.getActiveTask(project) ? true : false;
+    }
+
+    isSheduled(project) {
+        if(!project.tasks) {
+            return false;
+        }
+
+        if(project.tasks.length === 0) {
+            return false;
+        }
+
+        return project.tasks.find((item) => !item.status) ? true : false;
+    }
+
     destroy() {
         if(this.element) {
             this.element.remove();
@@ -402,10 +415,14 @@ class ProjectItem {
     }
 
     getButton(name) {
-        let buttons = this.element.getElementsByTagName("button");
+        return this.getItem("button", name);
+    }
+
+    getItem(tag, label) {
+        let buttons = this.element.getElementsByTagName(tag);
 
         for(let i = 0; i < buttons.length; i++) {
-            if(buttons.item(i).innerText === name) {
+            if(buttons.item(i).innerText === label) {
                 return buttons.item(i);
             }
         }
@@ -445,5 +462,15 @@ class ProjectItem {
 }
 
 function main() {
+    Dropzone.autoDiscover = false;
+
+    let dropzone = new Dropzone("div#upload-zip", {
+        url: "/zipfile",
+        dictDefaultMessage: "drop ZIP file here",
+        complete: function() {
+            this.removeAllFiles(true);
+        }
+    });
+
     let mainView = new MainView(new Data());
 }

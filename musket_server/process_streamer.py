@@ -62,19 +62,24 @@ def stream_subprocess(cmd, streamer, cwd, process_setter):
 
     print("TASK START")
 
-    process = subprocess.Popen(["musket", "deps_download"], stdout=subprocess.PIPE, cwd=cwd)
+    process = subprocess.Popen(["musket", "deps_download"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+
+    process.terminated = False
 
     process_setter(process)
 
     for line in io.TextIOWrapper(process.stdout, encoding="utf-8"):
         streamer.write_line(line)
 
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=cwd)
+    if not process.terminated:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=cwd)
 
-    process_setter(process)
+        process_setter(process)
 
-    for line in io.TextIOWrapper(process.stdout, encoding="utf-8"):
-        streamer.write_line(line)
+        for line in io.TextIOWrapper(process.stdout, encoding="utf-8"):
+            streamer.write_line(line)
+
+    streamer.write_line("report_end")
 
     streamer.stop()
 

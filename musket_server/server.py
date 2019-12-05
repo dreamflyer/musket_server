@@ -75,9 +75,11 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             task_id = params["task_id"]
             from_line = params["from_line"]
 
+            dump = "dump" in params.keys()
+
             self.server.task_manager.update_tasks()
 
-            report = utils.read_report(task_id, from_line, self.server.task_manager.task_status(task_id)).encode()
+            report = utils.read_report(task_id, from_line, self.server.task_manager.task_status(task_id), dump).encode()
 
             self.wfile.write(report)
 
@@ -120,6 +122,8 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             task_id = params["task_id"]
 
             self.server.task_manager.terminate_task(task_id)
+
+            self.wfile.write(json.dumps({"task_id": task_id}).encode("utf-8"))
 
             return
 
@@ -208,7 +212,7 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
-        if "zipfile" in self.path:
+        if "/zipfile" in self.path:
             with self.server.task_manager.lock:
                 destination = utils.temp_folder()
 

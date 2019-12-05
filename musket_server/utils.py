@@ -63,19 +63,36 @@ def project_path(project_id):
 def reports_folder():
     return os.path.expanduser("~/.musket_core/reports")
 
-def read_report(task_id, from_line, task_status):
+def read_report(task_id, from_line, task_status, dump=False):
     path = os.path.join(reports_folder(), task_id, "report.log")
 
     result = ""
 
+    not_ready = False
+
     if not task_status:
-        return REPORT_STATUS_TASK_SCHEDULED
+        result = REPORT_STATUS_TASK_SCHEDULED
+
+        not_ready = True
 
     if not os.path.exists(path) and task_status == "inprogress":
-        return REPORT_STATUS_NOT_AVAILABLE_YET
+        result = REPORT_STATUS_NOT_AVAILABLE_YET
+
+        not_ready = True
 
     if task_status == "unknown_task":
-        return REPORT_STATUS_TASK_UNKNOWN
+        result = REPORT_STATUS_TASK_UNKNOWN
+
+        not_ready = True
+
+    if not_ready:
+        if dump:
+            return json.dumps({
+                "text": result,
+                "next": -1000
+            })
+
+        return result
 
     count = 0
 
@@ -85,12 +102,22 @@ def read_report(task_id, from_line, task_status):
         for line in io.TextIOWrapper(f):
             lines.append(line)
 
+    size = len(lines)
+
     lines = lines[int(from_line):]
 
     for line in lines:
-        result += line
+        #print("LINE: (" + line + ")")
+
+        result += line.strip() + "\r\n"
 
         count += 1
+
+    if dump:
+        return json.dumps({
+            "text": result if len(result) else "empty_string",
+            "next": size
+        })
 
     return result if len(result) else "empty_string"
 
@@ -102,14 +129,16 @@ def listdir(path):
 def project_ids():
     return [item for item in os.listdir(workspace_folder()) if not item.startswith(".")]
 
-def associated_task(tasks_manager, project_id):
+def associated_tasks(tasks_manager, project_id):
+    result = []
+
     for item in tasks_manager.tasks:
         info = item.info()
 
         if "project_id" in info.keys() and info["project_id"] == project_id:
-            return info
+            result.append(info)
 
-    return None
+    return result
 
 def projects_info(tasks_manager, dump=True):
     ids = project_ids()
@@ -119,7 +148,8 @@ def projects_info(tasks_manager, dump=True):
     for item in ids:
         project_info = {
             "project_id": item,
-            "task": associated_task(tasks_manager, item)
+
+            "tasks": associated_tasks(tasks_manager, item)
         }
 
         result.append(project_info)

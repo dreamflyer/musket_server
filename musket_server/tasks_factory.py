@@ -13,7 +13,7 @@ import tqdm
 def schedule_command_task(project_id, task_manager: tasks.TaskManager):
     project = task_manager.workspace.project(project_id)
 
-    task = FakeTask(project)
+    task = ProjectFitTask(project)
 
     task_manager.schedule(task)
 
@@ -33,35 +33,39 @@ class DeltaAssemblyTask(tasks.Task):
         tasks.Task.__init__(self)
 
         self.project = project
+        self.process = None
 
-    def on_complete(self):
-        project_id = os.path.basename(self.project.path)
+        musket_utils.ensure(self.report_dir())
 
-        print("collecting...")
+    def cwd(self):
+        return os.path.dirname(__file__)
 
-        busy = utils.collect_results(project_id)
-
-        while busy=="busy":
-            time.sleep(1)
-
-            busy = utils.collect_results()
-
-        print("complete")
-
-    def on_data(self, data):
-        pass
+    def report_dir(self):
+        return os.path.join(utils.reports_folder(), self.id)
 
     def do_task(self, data_handler):
-        print("starting...")
+        process_streamer.execute_command("python collect_results.py " + os.path.basename(self.project.path), self.cwd(), data_handler, self.set_process, True)
 
-        pass
+    def on_data(self, data):
+        with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
+            f.write(data)
+
+    def on_complete(self):
+        print("TASK STOP")
+
+    def set_process(self, process):
+        self.process = process
 
     def terminate(self):
-        pass
+        if self.process:
+            self.process.terminated = True
+
+            self.process.kill()
 
     def info(self):
         return {
             "assembly": os.path.basename(self.project.path),
+            "project_id": os.path.basename(self.project.path),
             "task_id": self.id,
             "status": self.status,
             "type": "project_result_assembly"

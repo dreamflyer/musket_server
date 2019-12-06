@@ -176,6 +176,39 @@ class Data {
             });
         });
     }
+
+    assembly(project) {
+        let project_id = project.id;
+
+        this.lockProject(project_id);
+
+        getJSON('../collect_delta?project=' + project_id + "&dump=true").then(data => {
+            project.activeTask = data["task_id"];
+
+            this.projectUnlockers.push({
+                canUnlock: (newProjects) => {
+                    let project = this.getProject(project_id, newProjects);
+
+                    return (project && project.tasks && project.tasks.find((item) => item["task_id"] == data["task_id"] && item.status === "complete")) ? true : false;
+                },
+
+                unlock: () => {
+                    this.unlockProject(project_id);
+
+                    this.download("../download_delta?project_id=" + project_id, "results.zip")
+                },
+
+                unlocked: false
+            });
+        })
+    }
+
+    download(url, filename) {
+        let a = document.createElement("a");
+        a.href = url;
+        a.setAttribute("download", filename);
+        a.click();
+    }
 }
 
 class TerminalView {
@@ -237,6 +270,10 @@ class MainView {
 
             item.onEvent("Report", (dataId, project) => {
                 this.terminalView.start(project.activeTask);
+            });
+
+            item.onEvent("Download", (dataId, project) => {
+                data.assembly(project);
             });
 
             item.onClick(()=> {
@@ -334,8 +371,8 @@ class ProjectItem {
             this.getButton("Run").wrapper = this;
             this.getButton("Stop").wrapper = this;
             this.getButton("Delete").wrapper = this;
-
-            this.getItem("a", "Report").wrapper = this;
+            this.getButton("Report").wrapper = this;
+            this.getButton("Download").wrapper = this;
         }
 
         return this.element;

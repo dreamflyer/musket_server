@@ -35,7 +35,7 @@ class Task:
         def rejection(cause):
             print(cause)
 
-        Promise(lambda resolve, reject: resolve(self.do_task(self.call_on_data) or True)).then(lambda success: (Thread(target=self.call_on_complete).start() or True), rejection)
+        Promise(lambda resolve, reject: Thread(target=lambda: resolve(self.do_task(self.call_on_data) or True)).start()).then(lambda success: (Thread(target=self.call_on_complete).start() or True), rejection)
 
     def on_data(self, data):
         pass

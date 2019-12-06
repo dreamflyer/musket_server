@@ -175,12 +175,21 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
             id = tasks_factory.schedule_assembly_task(params["project"], self.server.task_manager)
 
+            if "dump" in params.keys():
+                id = json.dumps({
+                    "task_id": id
+                })
+
             self.wfile.write(id.encode())
 
             return
 
         if "/download_delta" in self.path:
-            zip_path = os.path.join(utils.temp_folder(), "project.zip")
+            params = utils.params(self.path)
+
+            result_folder = utils.project_results_folder(params["project_id"])
+
+            zip_path = os.path.join(result_folder, "project.zip")
 
             self.send_header('Content-type', 'application/zip')
             self.send_header("Content-Length", os.path.getsize(zip_path))
@@ -195,7 +204,7 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
                         chunk = f.read(1024)
 
-                shutil.rmtree(utils.temp_folder())
+                shutil.rmtree(result_folder)
 
             return
 

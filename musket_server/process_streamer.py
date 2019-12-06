@@ -57,22 +57,23 @@ class Streamer:
 
         self.send()
 
-def stream_subprocess(cmd, streamer, cwd, process_setter):
+def stream_subprocess(cmd, streamer, cwd, process_setter, skip_upload = False):
     os.environ["PATH"]=os.environ["PATH"] + ":/Users/dreamflyer/.conda/envs/surf360cam/bin"
 
     print("TASK START")
 
-    process = subprocess.Popen(["musket", "deps_download"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+    if not skip_upload:
+        process = subprocess.Popen(["musket", "deps_download"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 
-    process.terminated = False
+        process.terminated = False
 
-    process_setter(process)
+        process_setter(process)
 
-    for line in io.TextIOWrapper(process.stdout, encoding="utf-8"):
-        streamer.write_line(line)
+        for line in io.TextIOWrapper(process.stdout, encoding="utf-8"):
+            streamer.write_line(line)
 
-    if not process.terminated:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=cwd)
+    if skip_upload or not process.terminated:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 
         process_setter(process)
 
@@ -83,10 +84,10 @@ def stream_subprocess(cmd, streamer, cwd, process_setter):
 
     streamer.stop()
 
-def execute(command_line, streamer, cwd, process_setter):
-    stream_subprocess(shlex.split(command_line), streamer, cwd, process_setter)
+def execute(command_line, streamer, cwd, process_setter, skip_upload = False):
+    stream_subprocess(shlex.split(command_line), streamer, cwd, process_setter, skip_upload)
 
-def execute_command(command_line, cwd, logger, process_setter):
-    execute(command_line, Streamer(10, logger), cwd, process_setter)
+def execute_command(command_line, cwd, logger, process_setter, skip_upload = False):
+    execute(command_line, Streamer(10, logger), cwd, process_setter, skip_upload)
 
 

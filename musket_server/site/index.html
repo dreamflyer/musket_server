@@ -17,14 +17,14 @@
 
             </div>
             <div class="list-group">
-                <div class="list-group-item row d-flex justify-content-between">
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" placeholder="ZIP file path or GIT url" aria-label="ZIP file path or GIT url" aria-describedby="basic-addon2">
-                        <div class="input-group-append">
-                            <button class="btn btn-success" type="button">Upload</button>
-                        </div>
-                    </div>
-                </div>
+                <!--<div class="list-group-item row d-flex justify-content-between">-->
+                    <!--<div class="input-group mb-3">-->
+                        <!--<input type="text" class="form-control" placeholder="ZIP file path or GIT url" aria-label="ZIP file path or GIT url" aria-describedby="basic-addon2">-->
+                        <!--<div class="input-group-append">-->
+                            <!--<button class="btn btn-success" type="button">Upload</button>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                <!--</div>-->
                 <div class="list-group-item row d-flex justify-content-between">
                     <div id="upload-zip" class="dropzone"></div>
                 </div>
@@ -35,10 +35,11 @@
             <div class="list-group-item row d-flex justify-content-between">
                 <span class="mb-1">#project_id#</span>
                 <div class="row d-flex justify-content-between" style="width: 70%;">
-                    <a href="#" onclick="this.wrapper.click('Report')">Report</a>
+                    <button type="button" class="btn btn-success" onclick="this.wrapper.click('Report')">Report</button>
                     <button type="button" class="btn btn-success" onclick="this.wrapper.click('Run')">Run</button>
                     <button type="button" class="btn btn-danger" onclick="this.wrapper.click('Stop')">Stop</button>
                     <button type="button" class="btn btn-danger" onclick="this.wrapper.click('Delete')">Delete</button>
+                    <button type="button" class="btn btn-success" onclick="this.wrapper.click('Download')">Download</button>
                 </div>
             </div>
         </div>

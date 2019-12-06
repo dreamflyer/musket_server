@@ -57,6 +57,12 @@ def temp_folder():
 def workspace_folder():
     return os.path.expanduser("~/.musket_core/server_workspace")
 
+def assembly_results_folder():
+    return os.path.expanduser("~/.musket_core/assembly/results")
+
+def project_results_folder(project_id):
+    return os.path.join(assembly_results_folder(), project_id)
+
 def project_path(project_id):
     return os.path.join(workspace_folder(), project_id)
 
@@ -193,12 +199,14 @@ def collect_results(project_id):
     workspace_dir = workspace_folder()
     files = project_results(project_id)
 
-    temp = temp_folder()
+    results_folder = project_results_folder(project_id)
 
-    temp = os.path.join(temp_folder(), "zip")
+    temp = results_folder
+
+    temp = os.path.join(temp, "zip")
 
     if os.path.exists(temp):
-        return "busy"
+        shutil.rmtree(temp)
 
     utils.ensure(temp)
 
@@ -215,9 +223,11 @@ def collect_results(project_id):
         if not os.path.exists(parent):
             utils.ensure(parent)
 
+        print("collecting: " + src)
+
         shutil.copy(src, dst)
 
-    utils.archive(os.path.join(temp, project_id), os.path.join(temp_folder(), "project"))
+    utils.archive(os.path.join(temp, project_id), os.path.join(results_folder, "project"))
 
 def get_experiment_items(src, all_items):
     all_items.append(os.path.join(src, "summary.yaml"))

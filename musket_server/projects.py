@@ -22,9 +22,12 @@ class ServerWorkspace:
     def exists(self, id):
         return id in self.list_projects()
 
-    def pickup_project(self):
+    def pickup_project(self, name=None):
         temp_folder = utils.temp_folder()
         temp_content = [item for item in os.listdir(temp_folder) if os.path.isdir(os.path.join(temp_folder, item)) and not item.startswith("_")]
+
+        if name:
+            temp_content = [name]
 
         if len(temp_content) > 0:
             project_id = temp_content[0]

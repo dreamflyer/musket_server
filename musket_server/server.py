@@ -34,7 +34,9 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             with self.server.task_manager.lock:
-                git_url = utils.git_url(self.path)
+                params = utils.params(self.path)
+
+                git_url = params["git_url"]
 
                 destination = utils.temp_folder()
 
@@ -43,9 +45,16 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
                 os.mkdir(destination)
 
-                subprocess.Popen(['git', 'clone', git_url, destination])
+                subprocess.Popen(['git', 'clone', git_url, destination], stderr=subprocess.PIPE, stdout=subprocess.PIPE).communicate()
 
-                self.pickup_project()
+                project_id = params.pop("project_id", None)
+
+                self.pickup_project(project_id)
+
+                if "json" in params.keys():
+                    id = json.dumps({"project_id": project_id})
+
+                    self.wfile.write(id.encode())
 
             return
 
@@ -235,8 +244,10 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
                 self.pickup_project()
 
-    def pickup_project(self):
-        result = self.server.task_manager.workspace.pickup_project()
+    def pickup_project(self, name=None):
+        print("picking: " + str(name))
+
+        result = self.server.task_manager.workspace.pickup_project(name)
 
         result = "failure" if result == None else result
 

@@ -161,6 +161,10 @@ class Data {
         });
     }
 
+    addGitProject(gitUrl, projectId) {
+        getJSON("../gitclone?git_url=" + gitUrl + "&json=True"+ "&project_id=" + projectId);
+    }
+
     runProject(project) {
         let project_id = project.id;
 
@@ -275,6 +279,8 @@ class MainView {
 
         this.terminalView = new TerminalView();
 
+        document.getElementById("git-project-add").wrapper = this
+
         this.items.forEach(item => {
             item.onEvent("Delete", (dataId, project) => {
                 data.deleteProject(project.id);
@@ -308,6 +314,19 @@ class MainView {
 
     applyData(item, data) {
         item.applyData(data);
+    }
+
+    gitProject() {
+        return {
+            url: document.getElementById("git-url").value,
+            name: document.getElementById("git-project-name").value
+        };
+    }
+
+    addProjectClick() {
+        let project = this.gitProject();
+
+        this.data.addGitProject(project.url, project.name);
     }
 }
 

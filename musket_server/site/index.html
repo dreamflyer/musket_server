@@ -18,14 +18,15 @@
 
             </div>
             <div class="list-group">
-                <!--<div class="list-group-item row d-flex justify-content-between">-->
-                    <!--<div class="input-group mb-3">-->
-                        <!--<input type="text" class="form-control" placeholder="ZIP file path or GIT url" aria-label="ZIP file path or GIT url" aria-describedby="basic-addon2">-->
-                        <!--<div class="input-group-append">-->
-                            <!--<button class="btn btn-success" type="button">Upload</button>-->
-                        <!--</div>-->
-                    <!--</div>-->
-                <!--</div>-->
+                <div class="list-group-item row d-flex justify-content-between">
+                    <div class="input-group mb-3">
+                        <input id="git-url" type="text" class="form-control" placeholder="GIT url" aria-label="GIT url" aria-describedby="basic-addon2">
+                        <input id="git-project-name" type="text" class="form-control" placeholder="Project name" aria-label="Project name" aria-describedby="basic-addon2">
+                        <div class="input-group-append">
+                            <button id="git-project-add" class="btn btn-success" type="button" onclick="this.wrapper.addProjectClick()">Add Project</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="list-group-item row d-flex justify-content-between">
                     <div id="upload-zip" class="dropzone"></div>
                 </div>

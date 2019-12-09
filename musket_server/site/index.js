@@ -385,6 +385,8 @@ class ProjectItem {
             this.setButtonState("Run", "btn-secondary", "skip");
             this.setButtonState("Stop", "btn-secondary", "skip");
             this.setButtonState("Delete", "btn-secondary", "skip");
+            this.setButtonState("Report", "btn-secondary", "skip");
+            this.setButtonState("Download", "btn-secondary", "skip");
 
             return
         }
@@ -396,10 +398,14 @@ class ProjectItem {
                 this.setButtonState("Run", "btn-success", false);
                 this.setButtonState("Stop", "btn-danger", true);
                 this.setButtonState("Delete", "btn-secondary", true);
+                this.setButtonState("Report", "btn-success", "skip");
+                this.setButtonState("Download", "btn-secondary", "skip");
             } else {
                 this.setButtonState("Run", "btn-success", true);
                 this.setButtonState("Stop", "btn-danger", false);
                 this.setButtonState("Delete", "btn-danger", true);
+                this.setButtonState("Report", "btn-secondary", "skip");
+                this.setButtonState("Download", "btn-success", "skip");
             }
 
             this.data.update = null;

@@ -88,6 +88,8 @@ def execute(command_line, streamer, cwd, process_setter, skip_upload = False):
     stream_subprocess(shlex.split(command_line), streamer, cwd, process_setter, skip_upload)
 
 def execute_command(command_line, cwd, logger, process_setter, skip_upload = False):
+    print("executing: " + command_line)
+
     execute(command_line, Streamer(10, logger), cwd, process_setter, skip_upload)
 
 

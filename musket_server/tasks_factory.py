@@ -10,30 +10,31 @@ import time
 
 import tqdm
 
-def schedule_command_task(project_id, task_manager: tasks.TaskManager):
+def schedule_command_task(project_id, params, task_manager: tasks.TaskManager):
     project = task_manager.workspace.project(project_id)
 
-    task = ProjectFitTask(project)
+    task = ProjectFitTask(project, params)
 
     task_manager.schedule(task)
 
     return task.id
 
-def schedule_assembly_task(project_id, task_manager: tasks.TaskManager):
+def schedule_assembly_task(project_id, experiment, task_manager: tasks.TaskManager):
     project = task_manager.workspace.project(project_id)
 
-    task = DeltaAssemblyTask(project)
+    task = DeltaAssemblyTask(project, experiment)
 
     task_manager.schedule(task)
 
     return task.id
 
 class DeltaAssemblyTask(tasks.Task):
-    def __init__(self, project: musket_projects.Project):
+    def __init__(self, project: musket_projects.Project, experiment=None):
         tasks.Task.__init__(self)
 
         self.project = project
         self.process = None
+        self.experiment = experiment
 
         musket_utils.ensure(self.report_dir())
 
@@ -44,7 +45,12 @@ class DeltaAssemblyTask(tasks.Task):
         return os.path.join(utils.reports_folder(), self.id)
 
     def do_task(self, data_handler):
-        process_streamer.execute_command("python collect_results.py " + os.path.basename(self.project.path), self.cwd(), data_handler, self.set_process, True)
+        cmd = "python collect_results.py " + os.path.basename(self.project.path)
+
+        if self.experiment:
+            cmd = cmd + " " + self.experiment
+
+        process_streamer.execute_command(cmd, self.cwd(), data_handler, self.set_process, True)
 
     def on_data(self, data):
         with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
@@ -72,11 +78,12 @@ class DeltaAssemblyTask(tasks.Task):
         }
 
 class ProjectFitTask(tasks.Task):
-    def __init__(self, project: musket_projects.Project):
+    def __init__(self, project: musket_projects.Project, params):
         tasks.Task.__init__(self)
 
         self.project = project
         self.process = None
+        self.params = params
 
         musket_utils.ensure(self.report_dir())
 
@@ -87,7 +94,7 @@ class ProjectFitTask(tasks.Task):
         return os.path.join(utils.reports_folder(), self.id)
 
     def do_task(self, data_handler):
-        process_streamer.execute_command("musket fit", self.cwd(), data_handler, self.set_process)
+        process_streamer.execute_command("musket fit" + self.serializeParams(), self.cwd(), data_handler, self.set_process)
 
     def on_data(self, data):
         with open(os.path.join(self.report_dir(), "report.log"), 'a+') as f:
@@ -112,6 +119,20 @@ class ProjectFitTask(tasks.Task):
             "status": self.status,
             "type": "project_fit"
         }
+
+    def serializeParams(self):
+        result = ''
+
+        for item in self.params.keys():
+            if item == "project":
+                continue
+
+            if item == "json":
+                continue
+
+            result += " --" + item + " " + self.params[item]
+
+        return result
 
 class FakeTask(tasks.Task):
     def __init__(self, project: musket_projects.Project):

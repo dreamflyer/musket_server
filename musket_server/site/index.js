@@ -87,6 +87,10 @@ class Data {
             return false;
         }
 
+        if(!isArraysEqual(project1["experiments"], project2["experiments"], (item1, item2)=> item1 === item2)) {
+            return false;
+        }
+
         return true;
     }
 
@@ -162,7 +166,15 @@ class Data {
 
         this.lockProject(project_id);
 
-        getJSON('../project_fit?project=' + project_id + "&json=true").then(data => {
+        let url = "../project_fit?project=" + project_id + "&json=true";
+
+        let selection = project.experimentSelection();
+
+        if(selection) {
+            url += "&name=" + selection;
+        }
+
+        getJSON(url).then(data => {
             this.projectUnlockers.push({
                 canUnlock: (newProjects) => {
                     let project = this.getProject(project_id, newProjects);
@@ -182,7 +194,15 @@ class Data {
 
         this.lockProject(project_id);
 
-        getJSON('../collect_delta?project=' + project_id + "&dump=true").then(data => {
+        let url = "../collect_delta?project=" + project_id + "&dump=true";
+
+        let selection = project.experimentSelection();
+
+        if(selection) {
+            url += "&name=" + selection;
+        }
+
+        getJSON(url).then(data => {
             project.activeTask = data["task_id"];
 
             this.projectUnlockers.push({
@@ -408,6 +428,8 @@ class ProjectItem {
                 this.setButtonState("Download", "btn-success", "skip");
             }
 
+            this.fillExperiments(data["experiments"]);
+
             this.data.update = null;
 
             return
@@ -440,6 +462,45 @@ class ProjectItem {
         }
 
         return project.tasks.find((item) => !item.status) ? true : false;
+    }
+
+    fillExperiments(experiments) {
+        let dropdown = this.element.getElementsByClassName("dropdown-menu").item(0);
+
+        dropdown.innerHTML = "";
+
+        let items = [];
+
+        experiments.forEach(item => items.push(item));
+
+        items.push("All Experiments");
+
+        items.forEach(item=> {
+            let a = document.createElement("a");
+
+            a.innerText = item;
+            a.href = "javascript:void(0);";
+            a.classList.add("dropdown-item");
+            a.addEventListener("click", () => this.experimentSelected(item), false);
+
+            dropdown.appendChild(a);
+        })
+    }
+
+    experimentSelected(item) {
+        let label = this.element.getElementsByClassName("dropdown-toggle").item(0);
+
+        label.innerText = item;
+    }
+
+    experimentSelection() {
+        let selection = this.element.getElementsByClassName("dropdown-toggle").item(0).innerText;
+
+        if(selection === "All Experiments") {
+            return null
+        }
+
+        return selection;
     }
 
     destroy() {

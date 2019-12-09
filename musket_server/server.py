@@ -59,7 +59,7 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             params = utils.params(self.path)
 
-            id = tasks_factory.schedule_command_task(params["project"], self.server.task_manager)
+            id = tasks_factory.schedule_command_task(params["project"], params, self.server.task_manager)
 
             if "json" in params.keys():
                 id = json.dumps({"task_id": id})
@@ -173,7 +173,7 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             params = utils.params(self.path)
 
-            id = tasks_factory.schedule_assembly_task(params["project"], self.server.task_manager)
+            id = tasks_factory.schedule_assembly_task(params["project"], params.pop("name", None), self.server.task_manager)
 
             if "dump" in params.keys():
                 id = json.dumps({

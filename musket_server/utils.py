@@ -66,6 +66,14 @@ def project_results_folder(project_id):
 def project_path(project_id):
     return os.path.join(workspace_folder(), project_id)
 
+def experiments(project_id):
+    experiments_path = os.path.join(project_path(project_id), "experiments")
+
+    if not os.path.exists(experiments_path):
+        return []
+
+    return [item for item in os.listdir(experiments_path) if not (item.startswith(".") or item.startswith("_"))]
+
 def reports_folder():
     return os.path.expanduser("~/.musket_core/reports")
 
@@ -154,8 +162,8 @@ def projects_info(tasks_manager, dump=True):
     for item in ids:
         project_info = {
             "project_id": item,
-
-            "tasks": associated_tasks(tasks_manager, item)
+            "tasks": associated_tasks(tasks_manager, item),
+            "experiments": experiments(item)
         }
 
         result.append(project_info)
@@ -178,10 +186,10 @@ def all_info(tasks_manager, dump=True):
 
     return json.dumps(result) if dump else result
 
-def project_results(project_id):
+def project_results(project_id, experiment=None):
     experiments_path = os.path.join(project_path(project_id), "experiments")
 
-    experiments = listdir(experiments_path)
+    experiments = [experiment] if experiment else listdir(experiments_path)
 
     all_items = []
 
@@ -190,14 +198,14 @@ def project_results(project_id):
 
         get_experiment_items(experiment_path, all_items)
 
-        return [os.path.relpath(item, workspace_folder()) for item in all_items]
+    return [os.path.relpath(item, workspace_folder()) for item in all_items]
 
 def results_zip():
     return os.path.join(temp_folder(), "project.zip")
 
-def collect_results(project_id):
+def collect_results(project_id, experiment=None):
     workspace_dir = workspace_folder()
-    files = project_results(project_id)
+    files = project_results(project_id, experiment)
 
     results_folder = project_results_folder(project_id)
 
@@ -212,6 +220,8 @@ def collect_results(project_id):
 
     for item in files:
         src = os.path.join(workspace_dir, item)
+
+        print("collecting: " + src)
 
         if not os.path.exists(src):
             continue

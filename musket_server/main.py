@@ -6,8 +6,8 @@ def sysarg(num):
     return sys.argv[num] if len(sys.argv) > num else None
 
 def main():
-    if sysarg(1) == "setup":
-        setup_server.run(sysarg(2) , sysarg(3), sysarg(4))
+    if sysarg(2) == "setup":
+        setup_server.run(sysarg(1) , sysarg(3), sysarg(4), sysarg(5))
 
         return
 

@@ -15,7 +15,7 @@ def log(s):
 def set_process(p):
     pass
 
-def run(setup_for, kaggle_user=None, kaggle_authkey=None):
+def run(port, setup_for, kaggle_user=None, kaggle_authkey=None):
     dirname = os.path.dirname(__file__)
 
     setup = utils.load_yaml(os.path.join(dirname, "setup_configs",  setup_for + ".yaml"))
@@ -31,7 +31,7 @@ def run(setup_for, kaggle_user=None, kaggle_authkey=None):
 
         break
 
-    subprocess.Popen(shlex.split("./ngrok http 9393"))
+    subprocess.Popen(shlex.split("./ngrok http " + str(port)))
 
     while(True):
         try:
@@ -49,3 +49,15 @@ def run(setup_for, kaggle_user=None, kaggle_authkey=None):
             print("waiting ngrok...")
 
             time.sleep(1)
+
+    kaggle_dir = os.path.expanduser("~/.kaggle")
+
+    utils.ensure(kaggle_dir)
+
+    kaggle_json_path = os.path.join(kaggle_dir, "kaggle.json")
+
+    if not os.path.exists(kaggle_json_path):
+        with open(kaggle_json_path, "w") as f:
+            f.write('{"username":"' + kaggle_user +'","key":"' + kaggle_authkey  + '"}')
+
+    subprocess.Popen(shlex.split("musket_server " + str(port)))

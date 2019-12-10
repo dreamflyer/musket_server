@@ -60,4 +60,5 @@ def run(port, setup_for, kaggle_user=None, kaggle_authkey=None):
         with open(kaggle_json_path, "w") as f:
             f.write('{"username":"' + kaggle_user +'","key":"' + kaggle_authkey  + '"}')
 
-    subprocess.Popen(shlex.split("musket_server " + str(port)))
+    #subprocess.Popen(shlex.split("musket_server " + str(port)))
+    process_streamer.execute_command("musket_server " + str(port), os.getcwd(), log, set_process, True, 0.3)

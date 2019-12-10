@@ -1,9 +1,9 @@
 import os
 
+import subprocess, time
+
 from musket_server import process_streamer
 from musket_core import utils
-
-import subprocess
 
 import requests
 import shlex
@@ -23,6 +23,13 @@ def run(setup_for, kaggle_user=None, kaggle_authkey=None):
     process_streamer.execute_command("wget " + setup["ngrok"]["distr"], os.getcwd(), log, set_process, True, 0.3)
     process_streamer.execute_command("unzip " + setup["ngrok"]["zip"], os.getcwd(), log, set_process, True, 0.3)
 
+    while(True):
+        if not os.path.exists("./ngrok"):
+            time.sleep(1)
+
+            continue
+        break
+    
     subprocess.Popen(shlex.split("./ngrok http 9393"))
 
     response = requests.get("http://localhost:4040/api/tunnels")

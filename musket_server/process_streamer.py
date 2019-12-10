@@ -63,7 +63,7 @@ def stream_subprocess(cmd, streamer, cwd, process_setter, skip_upload = False):
     print("TASK START")
 
     if not skip_upload:
-        process = subprocess.Popen(["musket", "deps_download"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+        process = subprocess.Popen(["musket", "deps_download"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd)
 
         process.terminated = False
 
@@ -73,7 +73,7 @@ def stream_subprocess(cmd, streamer, cwd, process_setter, skip_upload = False):
             streamer.write_line(line)
 
     if skip_upload or not process.terminated:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd)
 
         process_setter(process)
 

@@ -1,0 +1,3 @@
+ngrok:
+  distr: 'https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip'
+  zip: 'ngrok-stable-linux-amd64.zip'

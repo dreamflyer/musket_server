@@ -1,0 +1,2 @@
+recursive-include musket_server/site *.*
+recursive-include musket_server/setup_configs *.*

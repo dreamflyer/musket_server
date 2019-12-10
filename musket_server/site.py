@@ -5,6 +5,10 @@ def site_path():
     return os.path.join(os.path.dirname(__file__), "site")
 
 def from_site(file_name):
+    print("requested: " + file_name);
+
+    print("exists: " + str(os.path.exists(os.path.join(site_path(), file_name))));
+    
     return os.path.join(site_path(), file_name)
 
 def resources():

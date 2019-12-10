@@ -28,10 +28,24 @@ def run(setup_for, kaggle_user=None, kaggle_authkey=None):
             time.sleep(1)
 
             continue
+
         break
-    
+
     subprocess.Popen(shlex.split("./ngrok http 9393"))
 
-    response = requests.get("http://localhost:4040/api/tunnels")
+    while(True):
+        try:
+            response = requests.get("http://localhost:4040/api/tunnels")
 
-    print(response.text)
+            if not str(response.status_code) == "200":
+                print("response code: " + str(response.status_code))
+
+                continue
+
+            print(response.text)
+
+            break
+        except:
+            print("waiting ngrok...")
+
+            time.sleep(1)

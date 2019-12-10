@@ -3,7 +3,7 @@ import sys
 from musket_server import server, tasks, setup_server
 
 def sysarg(num):
-    sys.argv[num] if len(sys.argv) > num else None
+    return sys.argv[num] if len(sys.argv) > num else None
 
 def main():
     if sysarg(1) == "setup":

@@ -46,7 +46,7 @@ def run(port, setup_for, kaggle_user=None, kaggle_authkey=None):
 
             ngrok_cfg = json.loads(response.text)
 
-            if len(ngrok_cfg["tunnels"] == 0):
+            if len(ngrok_cfg["tunnels"]) == 0:
                 print("ngrok tunnel not created yet...")
 
                 continue

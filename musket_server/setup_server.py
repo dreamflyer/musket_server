@@ -2,7 +2,7 @@ import os
 
 import subprocess, time
 
-from musket_server import process_streamer
+from musket_server import process_streamer, server, tasks
 from musket_core import utils
 
 import requests
@@ -61,4 +61,7 @@ def run(port, setup_for, kaggle_user=None, kaggle_authkey=None):
             f.write('{"username":"' + kaggle_user +'","key":"' + kaggle_authkey  + '"}')
 
     #subprocess.Popen(shlex.split("musket_server " + str(port)))
-    process_streamer.execute_command("musket_server " + str(port), os.getcwd(), log, set_process, True, 0.3)
+    #process_streamer.execute_command("musket_server " + str(port), os.getcwd(), log, set_process, True, 0.3)
+
+    server.start_server(int(port), tasks.TaskManager(2))
+

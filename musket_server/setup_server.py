@@ -8,6 +8,8 @@ from musket_core import utils
 import requests
 import shlex
 
+import json
+
 def log(s):
     if(len(s) > 0):
         print(s.strip())
@@ -42,7 +44,14 @@ def run(port, setup_for, kaggle_user=None, kaggle_authkey=None):
 
                 continue
 
-            print(response.text)
+            ngrok_cfg = json.loads(response.text)
+
+            if len(ngrok_cfg["tunnels"] == 0):
+                print("ngrok tunnel not created yet...")
+
+                continue
+
+            print("SERVER URL: " + ngrok_cfg["tunnels"][0]['public_url'])
 
             break
         except:

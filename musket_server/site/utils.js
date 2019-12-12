@@ -73,7 +73,7 @@ function readReport(task_id, from_line, handler) {
         }
 
         if(text.indexOf("report_end") >= 0) {
-            handler.report("report end!\r");
+            handler.report(text + "\r");
 
             return;
         }

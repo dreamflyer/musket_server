@@ -57,28 +57,33 @@ class Streamer:
 
         self.send()
 
+def handle_streams(process, streamer):
+    for line_encoded in process.stdout:
+        line = line_encoded.decode()
+
+        if line != '':
+            streamer.write_line(line)
+
 def stream_subprocess(cmd, streamer, cwd, process_setter, skip_upload = False):
     os.environ["PATH"]=os.environ["PATH"] + ":/Users/dreamflyer/.conda/envs/surf360cam/bin"
 
     print("TASK START")
 
     if not skip_upload:
-        process = subprocess.Popen(["musket", "deps_download"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd)
+        process = subprocess.Popen(["musket", "deps_download"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd, bufsize=0)
 
         process.terminated = False
 
         process_setter(process)
 
-        for line in io.TextIOWrapper(process.stdout, encoding="utf-8"):
-            streamer.write_line(line)
+        handle_streams(process, streamer)
 
     if skip_upload or not process.terminated:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd, bufsize=0)
 
         process_setter(process)
 
-        for line in io.TextIOWrapper(process.stdout, encoding="utf-8"):
-            streamer.write_line(line)
+        handle_streams(process, streamer)
 
     streamer.write_line("report_end")
 

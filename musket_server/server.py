@@ -206,12 +206,12 @@ class CustomHandler(http.server.BaseHTTPRequestHandler):
 
             with self.server.task_manager.lock:
                 with open(zip_path, "rb") as f:
-                    chunk = f.read(1024)
+                    chunk = f.read(20480)
 
                     while chunk:
                         self.wfile.write(chunk)
 
-                        chunk = f.read(1024)
+                        chunk = f.read(20480)
 
                 shutil.rmtree(result_folder)
 
